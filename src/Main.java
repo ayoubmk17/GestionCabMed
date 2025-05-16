@@ -6,12 +6,22 @@ import cabinetclasses.Rdv;
 
 import java.util.List;
 import java.util.Scanner;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
-    private static Scanner scanner = new Scanner(System.in);
+    private static Scanner scanner;
     private static CabinetMedica cabinet = new CabinetMedica();
 
     public static void main(String[] args) {
+        // Configuration de l'encodage pour Windows
+        try {
+            System.setProperty("file.encoding", "UTF-8");
+            scanner = new Scanner(System.in, "UTF-8");
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la configuration de l'encodage: " + e.getMessage());
+            scanner = new Scanner(System.in);
+        }
+
         boolean running = true;
 
         while (running) {
@@ -67,13 +77,13 @@ public class Main {
     }
 
     private static void afficherMenu() {
-        System.out.println("\n=== Système de Gestion Médicale ===");
-        System.out.println("1. Ajouter un médecin");
+        System.out.println("\n=== Systeme de Gestion Medicale ===");
+        System.out.println("1. Ajouter un medecin");
         System.out.println("2. Ajouter un patient");
         System.out.println("3. Programmer un rendez-vous");
         System.out.println("4. Modifier un rendez-vous");
         System.out.println("5. Afficher tous les rendez-vous");
-        System.out.println("6. Consulter le planning d'un médecin");
+        System.out.println("6. Consulter le planning d'un medecin");
         System.out.println("7. Afficher les statistiques du cabinet");
         System.out.println("8. Quitter");
         System.out.print("Votre choix : ");

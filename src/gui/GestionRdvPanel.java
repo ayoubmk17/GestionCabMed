@@ -73,12 +73,15 @@ public class GestionRdvPanel extends JPanel {
         JPanel rdvButtonPanel = new JPanel();
         JButton refreshButton = new JButton("Rafraîchir");
         JButton deleteButton = new JButton("Supprimer");
+        JButton modifyButton = new JButton("Modifier");
         
         refreshButton.addActionListener(e -> refreshRdvTable());
         deleteButton.addActionListener(e -> deleteSelectedRdv());
+        modifyButton.addActionListener(e -> modifySelectedRdv());
         
         rdvButtonPanel.add(refreshButton);
         rdvButtonPanel.add(deleteButton);
+        rdvButtonPanel.add(modifyButton);
         upperPanel.add(rdvButtonPanel, BorderLayout.SOUTH);
 
         // Panel inférieur pour ajouter un rendez-vous
@@ -247,6 +250,110 @@ public class GestionRdvPanel extends JPanel {
                 "Attention",
                 JOptionPane.WARNING_MESSAGE);
         }
+    }
+
+    private void modifySelectedRdv() {
+        int selectedRow = rdvTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this,
+                "Veuillez sélectionner un rendez-vous à modifier",
+                "Attention",
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Récupérer le rendez-vous sélectionné
+        int rdvId = (Integer) tableModel.getValueAt(selectedRow, 0);
+        final Rdv rdvToModify = cabinet.getListeRdv().stream()
+            .filter(rdv -> rdv.getId() == rdvId)
+            .findFirst()
+            .orElse(null);
+
+        if (rdvToModify == null) {
+            JOptionPane.showMessageDialog(this,
+                "Erreur: Rendez-vous non trouvé",
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Créer une boîte de dialogue pour la modification
+        Window parentWindow = SwingUtilities.getWindowAncestor(this);
+        JDialog modifyDialog;
+        if (parentWindow instanceof Frame) {
+            modifyDialog = new JDialog((Frame) parentWindow, "Modifier le rendez-vous", true);
+        } else if (parentWindow instanceof Dialog) {
+            modifyDialog = new JDialog((Dialog) parentWindow, "Modifier le rendez-vous", true);
+        } else {
+            modifyDialog = new JDialog();
+            modifyDialog.setTitle("Modifier le rendez-vous");
+            modifyDialog.setModal(true);
+        }
+        modifyDialog.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Créer les composants avec les valeurs actuelles
+        JTextField newDateField = new JTextField(rdvToModify.getDate(), 10);
+        JTextField newHeureField = new JTextField(rdvToModify.getHeure(), 5);
+
+        // Ajouter les composants à la boîte de dialogue
+        gbc.gridx = 0; gbc.gridy = 0;
+        modifyDialog.add(new JLabel("Nouvelle date (AAAA-MM-JJ):"), gbc);
+        gbc.gridx = 1;
+        modifyDialog.add(newDateField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        modifyDialog.add(new JLabel("Nouvelle heure (HH:MM):"), gbc);
+        gbc.gridx = 1;
+        modifyDialog.add(newHeureField, gbc);
+
+        // Boutons
+        JPanel buttonPanel = new JPanel();
+        JButton confirmButton = new JButton("Confirmer");
+        JButton cancelButton = new JButton("Annuler");
+
+        confirmButton.addActionListener(e -> {
+            try {
+                String newDate = newDateField.getText().trim();
+                String newHeure = newHeureField.getText().trim();
+
+                if (newDate.isEmpty() || newHeure.isEmpty()) {
+                    throw new IllegalArgumentException("La date et l'heure sont obligatoires");
+                }
+
+                Secretaire secretaire = new Secretaire("Secrétaire", "Cabinet", "secretariat@cabinet.com", "0102030405", cabinet);
+                secretaire.modifierRdv(rdvToModify, newDate, newHeure);
+
+                refreshRdvTable();
+                modifyDialog.dispose();
+                JOptionPane.showMessageDialog(this,
+                    "Rendez-vous modifié avec succès!",
+                    "Succès",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (IllegalArgumentException | IllegalStateException ex) {
+                JOptionPane.showMessageDialog(modifyDialog,
+                    "Erreur: " + ex.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> modifyDialog.dispose());
+
+        buttonPanel.add(confirmButton);
+        buttonPanel.add(cancelButton);
+
+        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        modifyDialog.add(buttonPanel, gbc);
+
+        // Configurer et afficher la boîte de dialogue
+        modifyDialog.pack();
+        modifyDialog.setLocationRelativeTo(this);
+        modifyDialog.setVisible(true);
     }
 
     private void clearFields() {
